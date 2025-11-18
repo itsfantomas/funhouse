@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Cobalt Bride: Ricarda Grayson</title>
+    <style>
+        /* --- ШРИФТЫ --- */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --color-bg: #0a0a12;
+            --color-accent: #c5a059; /* Antique Gold */
+            --color-accent-dim: #8a6e36;
+            --color-cobalt: #182b49;
+            --color-cobalt-light: #2a446e;
+            --color-text: #e0e0e0;
+            --color-paper: #fdfbf7;
+            --font-main: 'Playfair Display', serif;
+            --font-header: 'Cinzel', serif;
+            --font-hand: 'Pinyon Script', cursive;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none; /* Game feel */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- ФОН И АТМОСФЕРА --- */
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a24 0%, #000000 100%);
+            overflow: hidden;
+        }
+
+        .bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.4;
+            transition: opacity 1s ease;
+            z-index: 0;
+            filter: sepia(30%) contrast(110%);
+        }
+
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 40%, black 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .fog {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: url('https://raw.githubusercontent.com/danielstuart14/CSS_FOG_ANIMATION/master/img/fog1.png') repeat-x;
+            background-size: contain;
+            animation: fogMove 60s linear infinite;
+            opacity: 0.3;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes fogMove {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+
+        /* --- ИНТЕРФЕЙС --- */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+
+        h1, h2, h3 {
+            font-family: var(--font-header);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--color-accent);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        /* --- КНОПКИ И ИНТЕРАКТИВ --- */
+        .btn-gothic {
+            background: transparent;
+            border: 2px solid var(--color-accent);
+            color: var(--color-accent);
+            padding: 15px 40px;
+            font-family: var(--font-header);
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-gothic::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: var(--color-accent);
+            transform: translate(-50%, -50%) rotate(45deg);
+            transition: width 0.5s, height 0.5s;
+            z-index: -1;
+        }
+
+        .btn-gothic:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-gothic:hover {
+            color: #000;
+            box-shadow: 0 0 20px var(--color-accent-dim);
+        }
+
+        /* --- МЕНЮ ПОИСКА ПРЕДМЕТОВ (SCENE 2) --- */
+        #vanity-scene {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            /* Имитация стола Рикарды */
+        }
+
+        .interactive-item {
+            position: absolute;
+            cursor: pointer;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.8));
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .interactive-item:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 15px var(--color-accent));
+        }
+
+        .interactive-item img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: var(--color-accent);
+            padding: 5px 10px;
+            border: 1px solid var(--color-accent);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: var(--font-header);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 20;
+        }
+
+        /* --- МОДАЛЬНЫЕ ОКНА (КНИГИ, ДНЕВНИКИ) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .book-content {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: #f3e5d0; /* Старая бумага */
+            color: #2a2a2a;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.9), inset 0 0 100px rgba(139, 69, 19, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            overflow-y: auto;
+            border: 10px solid #3e2723;
+            border-radius: 5px;
+        }
+        
+        /* Стили скроллбара для книги */
+        .book-content::-webkit-scrollbar { width: 8px; }
+        .book-content::-webkit-scrollbar-track { background: #dccbb6; }
+        .book-content::-webkit-scrollbar-thumb { background: #5d4037; }
+
+        .book-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #5d4037;
+            font-family: var(--font-header);
+        }
+
+        .journal-entry h2 {
+            color: #5d4037;
+            text-align: center;
+            border-bottom: 2px solid #5d4037;
+            padding-bottom: 10px;
+        }
+
+        .journal-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .drop-cap {
+            float: left;
+            font-size: 3.5rem;
+            line-height: 0.8;
+            padding-right: 8px;
+            padding-top: 4px;
+            font-family: var(--font-header);
+            color: var(--color-cobalt-light);
+        }
+
+        /* --- ДРЕВО (CANVAS) --- */
+        #tree-canvas {
+            background: #f3e5d0 url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* --- ТАРО --- */
+        .tarot-table {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            perspective: 1000px;
+        }
+
+        .card-container {
+            width: 200px;
+            height: 350px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            cursor: pointer;
+        }
+
+        .card-container.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--color-accent);
+        }
+
+        .card-back {
+            background: var(--color-cobalt);
+            background-image: repeating-linear-gradient(45deg, rgba(197, 160, 89, 0.1) 0px, rgba(197, 160, 89, 0.1) 2px, transparent 2px, transparent 10px);
+        }
+        
+        .card-back::after {
+            content: '⚜';
+            font-size: 4rem;
+            color: var(--color-accent);
+        }
+
+        .card-front {
+            background: #fff;
+            transform: rotateY(180deg);
+            overflow: hidden;
+        }
+
+        .card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tarot-meaning {
+            position: absolute;
+            bottom: -100px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border: 1px solid var(--color-accent);
+            text-align: center;
+            opacity: 0;
+            transition: all 0.5s;
+            width: 300px;
+        }
+
+        .card-container.flipped ~ .tarot-meaning {
+            opacity: 1;
+            bottom: -150px;
+        }
+
+        /* --- МУЗЫКАЛЬНАЯ ШКАТУЛКА --- */
+        .music-control {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 50;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .music-control:hover { opacity: 1; }
+
+        /* --- PUZZLE --- */
+        .owl-puzzle {
+            background: #1a1a1a;
+            padding: 40px;
+            border: 2px solid var(--color-accent);
+            text-align: center;
+        }
+        
+        .owl-input {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--color-accent);
+            color: var(--color-text);
+            font-family: var(--font-header);
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 20px 0;
+            outline: none;
+            text-transform: uppercase;
+        }
+
+        /* --- СПЕЦИФИЧЕСКИЕ ЭЛЕМЕНТЫ СЦЕНЫ --- */
+        /* Позиционирование предметов на "столе" */
+        
+        /* 1. Портрет Рикарды (Биография) */
+        #item-portrait { top: 15%; left: 15%; width: 18%; transform: rotate(-3deg); }
+        /* 2. Медальон (Древо) */
+        #item-locket { bottom: 20%; left: 40%; width: 8%; }
+        /* 3. Карты Таро */
+        #item-cards { bottom: 25%; right: 20%; width: 12%; transform: rotate(15deg); }
+        /* 4. Письмо/Дневник (История) */
+        #item-letter { top: 60%; left: 10%; width: 15%; transform: rotate(5deg); }
+        /* 5. Статуэтка Совы (Секрет) */
+        #item-owl { top: 20%; right: 10%; width: 8%; }
+        
+        .hint-text {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-style: italic;
+            opacity: 0.5;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Эффекты окружения -->
+        <img src="https://image.pollinations.ai/prompt/victorian%20gothic%20manor%20dark%20room%20candlelight%20mystery%20fog?nologo=true&width=1920&height=1080" alt="Background" class="bg-image" id="main-bg">
+        <div class="vignette"></div>
+        <div class="fog"></div>
+
+        <!-- ЭКРАН 1: ВСТУПЛЕНИЕ -->
+        <section id="screen-intro" class="screen">
+            <h1 style="font-size: 4rem; margin-bottom: 10px;">The Cobalt Bride</h1>
+            <h3 style="font-family: var(--font-hand); font-size: 2rem; color: var(--color-text);">Ricarda Grayson's Mystery</h3>
+            <p style="max-width: 600px; text-align: center; margin-bottom: 40px; line-height: 1.6;">
+                Gotham, 1888. The fog hides secrets older than the city itself. 
+                You stand before the vanity of the future Duchess, where memories and omens intertwine.
+            </p>
+            <button class="btn-gothic" onclick="game.start()">Enter the Manor</button>
+        </section>
+
+        <!-- ЭКРАН 2: КОМНАТА (MAIN HUB) -->
+        <section id="screen-room" class="screen hidden">
+            <div id="vanity-scene">
+                
+                <!-- Предмет: Портрет (Открывает Биографию) -->
+                <div class="interactive-item" id="item-portrait" onclick="game.openModal('bio')">
+                    <img src="https://image.pollinations.ai/prompt/oil%20painting%20portrait%20beautiful%20victorian%20woman%20bronze%20skin%20cobalt%20blue%20eyes%20black%20hair%20elegant%20dress%20ornate%20frame?nologo=true" alt="Portrait">
+                </div>
+
+                <!-- Предмет: Медальон (Открывает Древо) -->
+                <div class="interactive-item" id="item-locket" onclick="game.openModal('tree')">
+                    <img src="https://image.pollinations.ai/prompt/antique%20gold%20locket%20open%20chain%20victorian%20jewelry%20isolated?nologo=true" alt="Locket">
+                </div>
+
+                <!-- Предмет: Карты (Открывает Таро) -->
+                <div class="interactive-item" id="item-cards" onclick="game.openModal('tarot')">
+                    <img src="https://image.pollinations.ai/prompt/stack%20of%20mystical%20tarot%20cards%20victorian%20style%20on%20wood%20table?nologo=true" alt="Cards">
+                </div>
+
+                <!-- Предмет: Письмо (Открывает Историю) -->
+                <div class="interactive-item" id="item-letter" onclick="game.openModal('story')">
+                    <img src="https://image.pollinations.ai/prompt/old%20parchment%20letter%20wax%20seal%20quill%20ink%20victorian?nologo=true" alt="Letter">
+                </div>
+
+                <!-- Предмет: Сова (Секрет) -->
+                <div class="interactive-item" id="item-owl" onclick="game.openModal('owl')">
+                    <img src="https://image.pollinations.ai/prompt/bronze%20owl%20statue%20antique%20mysterious%20glowing%20eyes%20isolated?nologo=true" alt="Owl Statue">
+                </div>
+
+                <div class="hint-text">Explore the objects to uncover the truth...</div>
+            </div>
+        </section>
+
+        <!-- МУЗЫКА -->
+        <div class="music-control" onclick="audioSys.toggle()" title="Music Box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+        </div>
+
+        <!-- МОДАЛЬНЫЕ ОКНА -->
+        
+        <!-- 1. BIO -->
+        <div id="modal-bio" class="modal-overlay">
+            <div class="book-content">
+                <span class="book-close" onclick="game.closeModal()">×</span>
+                <div class="journal-entry">
+                    <h2>Ricarda Grayson</h2>
+                    <div style="text-align:center; margin: 20px 0;">
+                        <img src="https://image.pollinations.ai/prompt/sketch%20drawing%20of%20ricarda%20grayson%20victorian%20woman%20intense%20eyes?nologo=true" style="width: 200px; border: 5px solid #5d4037;">
+                    </div>
+                    <p class="journal-text"><span class="drop-cap">R</span>icarda possesses a striking and exotic beauty that sets her apart from the English aristocracy. Her skin is a warm, bronzed hue, contrasting sharply with the pallor of most Victorian ladies. Her eyes are a deep, almost unreal cobalt blue, holding ancient secrets.</p>
+                    <p class="journal-text"><strong>Age:</strong> 21<br><strong>Origin:</strong> Spain (Hidden Romani Heritage)<br><strong>Status:</strong> Last heir to the Grayson line, betrothed to Lord Bruce Wayne.</p>
+                    <p class="journal-text">She grew up in Spain, believing her mother Maria to be a local, unaware that Maria was Romani hiding under false papers. Ricarda is resourceful, observant, and possesses a quiet determination. She comes to Gotham not for love, but for duty—and perhaps, survival.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. STORY -->
+        <div id="modal-story" class="modal-overlay">
+            <div class="book-content">
+                <span class="book-close" onclick="game.closeModal()">×</span>
+                <div class="journal-entry">
+                    <h2>The Contract</h2>
+                    <p class="journal-text"><span class="drop-cap">T</span>he marriage contract, sealed before Bruce Wayne's birth, promised the future Duke to the Grayson heiress. It was a desperate bid by John Grayson's father to save the family from ruin. Neither Thomas Wayne nor John Grayson suspected their lines might be linked to the Court of Owls.</p>
+                    <p class="journal-text">Recently, John and Maria were murdered in Spain. Ricarda fled to Gotham. The union is unequal, burdened by duty, hidden pasts, and the complex interplay between two vastly different souls.</p>
+                    <hr style="border-color: #5d4037; margin: 20px 0;">
+                    <p class="journal-text" style="font-family: var(--font-hand); font-size: 1.5rem;">"Beware the Court of Owls, that watches all the time..."</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TREE -->
+        <div id="modal-tree" class="modal-overlay">
+            <div class="book-content" style="background: #1a1a1a; border-color: #c5a059; padding: 0; overflow: hidden;">
+                <span class="book-close" style="color: #c5a059; z-index: 10;" onclick="game.closeModal()">×</span>
+                <canvas id="tree-canvas"></canvas>
+                <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; color: #c5a059;">Drag to move • Scroll to zoom</div>
+            </div>
+        </div>
+
+        <!-- 4. TAROT -->
+        <div id="modal-tarot" class="modal-overlay">
+            <div class="book-content" style="background: transparent; border: none; box-shadow: none; overflow: visible;">
+                <span class="book-close" style="color: #fff;" onclick="game.closeModal()">×</span>
+                <div class="tarot-table">
+                    <div class="card-container" onclick="tarot.flip(this)">
+                        <div class="card-face card-back"></div>
+                        <div class="card-face card-front">
+                            <img id="tarot-img" src="" alt="Tarot">
+                        </div>
+                    </div>
+                    <div class="tarot-meaning" id="tarot-text">
+                        <h3 id="tarot-title">The Moon</h3>
+                        <p id="tarot-desc">Illusion, fear, and the subconscious. Secrets are hidden in the moonlight.</p>
+                    </div>
+                </div>
+                <button class="btn-gothic" style="position: absolute; bottom: 20px;" onclick="tarot.draw()">Draw Fate</button>
+            </div>
+        </div>
+
+        <!-- 5. OWL PUZZLE -->
+        <div id="modal-owl" class="modal-overlay">
+            <div class="owl-puzzle">
+                <span class="book-close" style="color: #c5a059; position:relative; top:-20px; right:-20px;" onclick="game.closeModal()">×</span>
+                <h2>The Court's Password</h2>
+                <p style="color: #aaa;">"I watch from the shadows, I judge from the perch. Who am I?"</p>
+                <input type="text" class="owl-input" id="puzzle-input" maxlength="10">
+                <button class="btn-gothic" onclick="puzzle.check()">Whisper</button>
+                <p id="puzzle-result" style="margin-top: 20px; height: 20px; color: #c5a059;"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* --- LOGIC --- */
+
+        const game = {
+            state: 'intro',
+            
+            start: () => {
+                document.getElementById('screen-intro').classList.add('hidden');
+                setTimeout(() => {
+                    document.getElementById('screen-intro').style.display = 'none';
+                    document.getElementById('screen-room').classList.remove('hidden');
+                }, 800);
+                audioSys.start();
+            },
+
+            openModal: (type) => {
+                const modal = document.getElementById(`modal-${type}`);
+                if (modal) {
+                    modal.classList.add('active');
+                    if (type === 'tree') treeSys.init();
+                    if (type === 'tarot') tarot.draw();
+                }
+            },
+
+            closeModal: () => {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+            }
+        };
+
+        /* --- AUDIO SYSTEM (Web Audio API - Synth) --- */
+        const audioSys = {
+            ctx: null,
+            isPlaying: false,
+            interval: null,
+            notes: [
+                {f: 329.63, d: 0.5}, {f: 493.88, d: 0.5}, {f: 392.00, d: 0.5}, // E, B, G
+                {f: 329.63, d: 0.5}, {f: 587.33, d: 1.0}, // E, D
+                {f: 329.63, d: 0.5}, {f: 293.66, d: 0.5}, {f: 246.94, d: 1.0}  // E, D, B
+            ],
+            noteIndex: 0,
+
+            init: function() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            },
+
+            playNote: function(freq, duration) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine'; // Music box like tone
+                osc.frequency.value = freq;
+                
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+
+            loop: function() {
+                if (!this.isPlaying) return;
+                const note = this.notes[this.noteIndex];
+                this.playNote(note.f, 2.0); // Play prolonged notes for atmosphere
+                this.noteIndex = (this.noteIndex + 1) % this.notes.length;
+            },
+
+            start: function() {
+                if (!this.ctx) this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.isPlaying = true;
+                if (!this.interval) {
+                    this.interval = setInterval(() => this.loop(), 800); // BPM control
+                }
+            },
+
+            toggle: function() {
+                this.isPlaying = !this.isPlaying;
+                if (!this.isPlaying) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                } else {
+                    this.start();
+                }
+            }
+        };
+
+        /* --- TAROT SYSTEM --- */
+        const tarot = {
+            cards: [
+                { 
+                    name: "The High Priestess", 
+                    desc: "Intuition, sacred knowledge, divine feminine. Ricarda's hidden heritage.",
+                    prompt: "tarot%20card%20high%20priestess%20victorian%20style%20mystical"
+                },
+                { 
+                    name: "The Tower", 
+                    desc: "Sudden change, upheaval, chaos. The murder of the Graysons.",
+                    prompt: "tarot%20card%20the%20tower%20lightning%20destruction%20victorian"
+                },
+                { 
+                    name: "The Lovers", 
+                    desc: "Relationships, choices, alignment of values. The arranged marriage to Bruce.",
+                    prompt: "tarot%20card%20the%20lovers%20victorian%20couple%20gothic"
+                },
+                { 
+                    name: "The Moon", 
+                    desc: "Illusion, fear, secrets. The Court of Owls watching.",
+                    prompt: "tarot%20card%20the%20moon%20gothic%20dark%20night"
+                },
+                { 
+                    name: "Justice", 
+                    desc: "Truth, cause and effect, law. The marriage contract.",
+                    prompt: "tarot%20card%20justice%20scales%20sword%20victorian"
+                }
+            ],
+            
+            draw: function() {
+                const container = document.querySelector('.card-container');
+                container.classList.remove('flipped');
+                
+                // Wait for flip back then change content
+                setTimeout(() => {
+                    const randomCard = this.cards[Math.floor(Math.random() * this.cards.length)];
+                    document.getElementById('tarot-title').innerText = randomCard.name;
+                    document.getElementById('tarot-desc').innerText = randomCard.desc;
+                    document.getElementById('tarot-img').src = `https://image.pollinations.ai/prompt/${randomCard.prompt}?nologo=true`;
+                    
+                    // Auto flip after load (simulated)
+                    setTimeout(() => {
+                        container.classList.add('flipped');
+                    }, 500);
+                }, 500);
+            },
+
+            flip: function(el) {
+                el.classList.toggle('flipped');
+            }
+        };
+
+        /* --- FAMILY TREE SYSTEM (Canvas) --- */
+        const treeSys = {
+            canvas: null,
+            ctx: null,
+            nodes: [],
+            
+            init: function() {
+                this.canvas = document.getElementById('tree-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                
+                this.setupNodes();
+                this.draw();
+            },
+
+            setupNodes: function() {
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                
+                this.nodes = [
+                    { x: cx - 200, y: cy - 150, label: "Thomas Wayne", type: "wayne" },
+                    { x: cx - 100, y: cy - 150, label: "Martha Wayne", type: "wayne" },
+                    { x: cx + 100, y: cy - 150, label: "John Grayson", type: "grayson" },
+                    { x: cx + 200, y: cy - 150, label: "Maria (Romani)", type: "grayson" },
+                    
+                    { x: cx - 150, y: cy + 50, label: "Bruce Wayne", type: "wayne-heir" },
+                    { x: cx + 150, y: cy + 50, label: "Ricarda Grayson", type: "grayson-heir" },
+                    
+                    { x: cx, y: cy + 150, label: "The Contract", type: "union" }
+                ];
+            },
+
+            draw: function() {
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw Lines
+                ctx.strokeStyle = '#8a6e36';
+                ctx.lineWidth = 2;
+                
+                // Wayne Parents -> Bruce
+                ctx.beginPath();
+                ctx.moveTo(this.nodes[0].x, this.nodes[0].y);
+                ctx.lineTo(this.nodes[4].x, this.nodes[4].y);
+                ctx.moveTo(this.nodes[1].x, this.nodes[1].y);
+                ctx.lineTo(this.nodes[4].x, this.nodes[4].y);
+                ctx.stroke();
+
+                // Grayson Parents -> Ricarda
+                ctx.beginPath();
+                ctx.moveTo(this.nodes[2].x, this.nodes[2].y);
+                ctx.lineTo(this.nodes[5].x, this.nodes[5].y);
+                ctx.moveTo(this.nodes[3].x, this.nodes[3].y);
+                ctx.lineTo(this.nodes[5].x, this.nodes[5].y);
+                ctx.stroke();
+
+                // Bruce & Ricarda -> Contract
+                ctx.setLineDash([5, 5]); // Dashed line for pending union
+                ctx.beginPath();
+                ctx.moveTo(this.nodes[4].x, this.nodes[4].y);
+                ctx.lineTo(this.nodes[6].x, this.nodes[6].y);
+                ctx.moveTo(this.nodes[5].x, this.nodes[5].y);
+                ctx.lineTo(this.nodes[6].x, this.nodes[6].y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Draw Nodes
+                this.nodes.forEach(node => {
+                    ctx.beginPath();
+                    ctx.fillStyle = node.type.includes('wayne') ? '#1a1a24' : (node.type.includes('grayson') ? '#3e2723' : '#c5a059');
+                    ctx.arc(node.x, node.y, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Text
+                    ctx.fillStyle = node.type === 'union' ? '#000' : '#fff';
+                    ctx.font = "14px Cinzel";
+                    ctx.textAlign = "center";
+                    ctx.fillText(node.label, node.x, node.y + 50);
+                });
+            }
+        };
+
+        /* --- PUZZLE SYSTEM --- */
+        const puzzle = {
+            check: function() {
+                const val = document.getElementById('puzzle-input').value.toLowerCase();
+                const res = document.getElementById('puzzle-result');
+                
+                if (val.includes('owl') || val.includes('court') || val.includes('talon')) {
+                    res.style.color = '#ff4444';
+                    res.innerText = "THE TALON KNOWS YOUR NAME NOW.";
+                    // Visual easter egg
+                    document.body.style.filter = "grayscale(100%) contrast(150%)";
+                    setTimeout(() => document.body.style.filter = "none", 2000);
+                } else {
+                    res.style.color = '#aaa';
+                    res.innerText = "Silence is the only answer.";
+                }
+            }
+        };
+
+        // Mouse trail effect for magic atmosphere
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.8) {
+                const spark = document.createElement('div');
+                spark.style.position = 'absolute';
+                spark.style.left = e.pageX + 'px';
+                spark.style.top = e.pageY + 'px';
+                spark.style.width = '2px';
+                spark.style.height = '2px';
+                spark.style.background = '#c5a059';
+                spark.style.pointerEvents = 'none';
+                spark.style.boxShadow = '0 0 10px #c5a059';
+                spark.style.transition = 'all 1s';
+                document.body.appendChild(spark);
+                
+                setTimeout(() => {
+                    spark.style.transform = 'translateY(-50px)';
+                    spark.style.opacity = 0;
+                }, 10);
+                setTimeout(() => spark.remove(), 1000);
+            }
+        });
+
+    </script>
+</body>
+</html>
